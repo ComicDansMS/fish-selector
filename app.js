@@ -2,11 +2,10 @@
   "use strict";
 
   const {
-    zones,
-    plants,
+    groups,
+    fishes,
     byId,
     DIFFICULTY,
-    LIGHT_LEVELS,
     $,
     $$,
     esc,
@@ -28,7 +27,7 @@
     removeFromCart,
     isFavourite,
     setFavourite,
-  } = globalThis.PLANT_CORE;
+  } = globalThis.FISH_CORE;
 
   const reducedMotion = () =>
     window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? true;
@@ -38,25 +37,7 @@
       key: "difficulty",
       label: "Difficulty",
       options: DIFFICULTY.map((d) => [d, d]),
-      test: (plant, value) => plant.difficulty === value,
-    },
-    {
-      key: "light",
-      label: "Light",
-      options: LIGHT_LEVELS.map((l) => [l, l]),
-      test: (plant, value) => plant.light.includes(value),
-    },
-    {
-      key: "co2",
-      label: "CO2",
-      options: ["Optional", "Recommended", "Required"].map((v) => [v, v]),
-      test: (plant, value) => plant.conditionMap.CO2 === value,
-    },
-    {
-      key: "growth",
-      label: "Growth",
-      options: ["Very slow", "Slow", "Medium", "Fast"].map((v) => [v, v]),
-      test: (plant, value) => plant.conditionMap.Growth === value,
+      test: (fish, value) => fish.difficulty === value,
     },
   ];
 
@@ -71,12 +52,12 @@
   const byName = (a, b) =>
     a.name.localeCompare(b.name, "en", { sensitivity: "base" });
   function comparePrice(a, b, sign) {
-    // Unpriced plants stay last in both directions.
+    // Unpriced fish stay last in both directions.
     if (a.price === null || b.price === null)
       return Number(a.price === null) - Number(b.price === null) || byName(a, b);
     return sign * (a.price - b.price) || byName(a, b);
   }
-  const difficultyRank = (plant) => DIFFICULTY.indexOf(plant.difficulty);
+  const difficultyRank = (fish) => DIFFICULTY.indexOf(fish.difficulty);
   const SORTS = {
     featured: (a, b) => a.order - b.order,
     "name-asc": byName,
@@ -89,72 +70,72 @@
     "price-desc": (a, b) => comparePrice(a, b, -1),
   };
 
-  function matches(plant) {
-    if (view.query && !plant.searchText.includes(view.query)) return false;
+  function matches(fish) {
+    if (view.query && !fish.searchText.includes(view.query)) return false;
     for (const facet of FACETS) {
       const chosen = view.facets.get(facet.key);
-      if (chosen.size && ![...chosen].some((v) => facet.test(plant, v)))
+      if (chosen.size && ![...chosen].some((v) => facet.test(fish, v)))
         return false;
     }
     if (view.min !== null || view.max !== null) {
-      if (plant.price === null) return false;
-      if (view.min !== null && plant.price < view.min) return false;
-      if (view.max !== null && plant.price > view.max) return false;
+      if (fish.price === null) return false;
+      if (view.min !== null && fish.price < view.min) return false;
+      if (view.max !== null && fish.price > view.max) return false;
     }
     return true;
   }
 
   /* Markup */
 
-  function cardPriceHTML(plant) {
-    if (plant.price === null) return '<span class="price__none">No price</span>';
-    return `<span class="price__current">${money(plant.price)}</span>`;
+  function cardPriceHTML(fish) {
+    if (fish.price === null) return '<span class="price__none">No price</span>';
+    return `<span class="price__current">${money(fish.price)}</span>`;
   }
 
-  function cardHTML(plant) {
-    const [first, second] = plant.photos;
+  function cardHTML(fish) {
+    const [first, second] = fish.photos;
     // The hover photo gets no src until a mouse reaches the card, so touch
     // devices, which never show it, never download it.
     const hover = second
       ? `<img class="card__hover" data-src="${esc(second.src)}" alt="" width="600" height="600" decoding="async">`
       : "";
-    return `<li class="product-grid__item" data-id="${plant.id}">
+    return `<li class="product-grid__item" data-id="${fish.id}">
       <div class="card">
         <div class="card__media">
           <img src="${esc(first.src)}" alt="" width="600" height="600" loading="lazy" decoding="async">
           ${hover}
         </div>
         <div class="card__info">
-          <h3 class="card__heading"><a class="card__link" href="#plant-${plant.id}" data-open-plant="${plant.id}">${esc(plant.name)}</a></h3>
-          <p class="card__sub">${esc(plant.scientific)}</p>
-          <span class="diff" data-d="${plant.difficulty}">${plant.difficulty}</span>
-          <p class="price">${cardPriceHTML(plant)}</p>
+          <h3 class="card__heading"><a class="card__link" href="#fish-${fish.id}" data-open-fish="${fish.id}">${esc(fish.name)}</a></h3>
+          <p class="card__sub">${esc(fish.scientific)}</p>
+          <span class="diff" data-d="${fish.difficulty}">${fish.difficulty}</span>
+          <p class="price">${cardPriceHTML(fish)}</p>
         </div>
         <div class="card__actions">
-          <button type="button" class="card__add" data-quick-add="${plant.id}" aria-pressed="false" aria-label="Add ${esc(plant.name)} to list">
+          <button type="button" class="card__add" data-quick-add="${fish.id}" aria-pressed="false" aria-label="Add ${esc(fish.name)} to list">
             <span class="card__add-label">Add to list</span>
           </button>
-          <button type="button" class="card__favourite" data-favourite="${plant.id}" aria-pressed="false" aria-label="Favourite ${esc(plant.name)}" title="Favourite">${ICONS.heart}</button>
+          <button type="button" class="card__favourite" data-favourite="${fish.id}" aria-pressed="false" aria-label="Favourite ${esc(fish.name)}" title="Favourite">${ICONS.heart}</button>
         </div>
       </div>
     </li>`;
   }
 
-  function renderZones() {
-    $("#zone-sections").innerHTML = zones
+  function renderGroups() {
+    $("#group-sections").innerHTML = groups
       .map(
-        (zone) => `<section class="zone" id="z-${zone.id}" aria-labelledby="z-${zone.id}-title">
-          <div class="zone__head">
-            <h2 id="z-${zone.id}-title">${esc(zone.name)}</h2>
-            <p class="zone__count"></p>
+        (group) => `<section class="group" id="g-${group.id}" aria-labelledby="g-${group.id}-title">
+          <div class="group__head">
+            <h2 id="g-${group.id}-title">${esc(group.name)}</h2>
+            <p class="group__count"></p>
           </div>
-          <p class="zone__intro">${esc(zone.intro)}</p>
-          <ul class="product-grid" role="list">${zone.plants.map((p) => cardHTML(byId.get(p.id))).join("")}</ul>
+          <p class="group__intro">${esc(group.intro)}</p>
+          <ul class="product-grid" role="list">${group.species.map((p) => cardHTML(byId.get(p.id))).join("")}</ul>
         </section>`,
       )
       .join("");
-    $("#zones").innerHTML = zones
-      .map((zone) => `<a href="#z-${zone.id}">${esc(zone.name)}</a>`)
+    $("#groups").innerHTML = groups
+      .map((group) => `<a href="#g-${group.id}">${esc(group.name)}</a>`)
       .join("");
   }
 
@@ -162,8 +143,8 @@
 
   function renderFacetForm() {
     const count = (facet, value) =>
-      plants.filter((plant) => facet.test(plant, value)).length;
-    const highest = Math.max(...plants.map((p) => p.price ?? 0));
+      fishes.filter((fish) => facet.test(fish, value)).length;
+    const highest = Math.max(0, ...fishes.map((fish) => fish.price ?? 0));
     $("#filter-form").innerHTML =
       FACETS.map(
         (facet) => `<fieldset class="facet">
@@ -181,7 +162,7 @@
       ).join("") +
       `<fieldset class="facet">
         <legend>Price</legend>
-        <p class="facet__hint">Uses the average store price for each plant. Plants without a price are hidden while a price is set.</p>
+        <p class="facet__hint">Uses the average store price for each fish. Fish without a price are hidden while a price is set.</p>
         <div class="facet__range">
           <label><span>From $</span><input type="number" name="min" min="0" step="1" inputmode="decimal" placeholder="0"></label>
           <label><span>To $</span><input type="number" name="max" min="0" step="1" inputmode="decimal" placeholder="${Math.ceil(highest / 100)}"></label>
@@ -245,7 +226,7 @@
   let renderedSort = null;
   function applyView() {
     let total = 0;
-    for (const section of $$(".zone")) {
+    for (const section of $$(".group")) {
       const list = $(".product-grid", section);
       const items = $$(".product-grid__item", list);
       // Moving nodes can drop keyboard focus, so only reorder when the sort
@@ -263,8 +244,8 @@
         if (!item.hidden) count++;
       }
       section.hidden = count === 0;
-      $(".zone__count", section).textContent = plural(count, "plant");
-      $(`#zones a[href="#${section.id}"]`).hidden = count === 0;
+      $(".group__count", section).textContent = plural(count, "fish", "fish");
+      $(`#groups a[href="#${section.id}"]`).hidden = count === 0;
       total += count;
     }
     renderedSort = view.sort;
@@ -274,15 +255,15 @@
     // accessibility tree so changes are still announced.
     const resultCount = $("#result-count");
     resultCount.textContent =
-      total === plants.length
-        ? plural(total, "plant")
-        : `${total} of ${plural(plants.length, "plant")}`;
+      total === fishes.length
+        ? plural(total, "fish", "fish")
+        : `${total} of ${plural(fishes.length, "fish", "fish")}`;
     resultCount.classList.toggle(
       "visually-hidden",
       !view.query && !active.length,
     );
     $("#empty").hidden = total > 0;
-    $("#filters-apply").textContent = `Show ${plural(total, "plant")}`;
+    $("#filters-apply").textContent = `Show ${plural(total, "fish", "fish")}`;
 
     const badge = $("#filter-count");
     badge.hidden = !active.length;
@@ -346,7 +327,7 @@
   /* Added to list notification (Dawn's cart notification) */
 
   // A popover rather than a dialog, so the page behind keeps scrolling. Over
-  // the plant modal it has to live inside that dialog, because everything
+  // the fish modal it has to live inside that dialog, because everything
   // outside a modal dialog is inert.
   const added = $("#added");
   const ADDED_TIMEOUT = 3000;
@@ -375,7 +356,7 @@
     showMessage(`${byId.get(id).name} removed from your list`);
   }
 
-  // Called before adding, since adding takes the plant out of favourites
+  // Called before adding, since adding takes the fish out of favourites
   // and updating changes the quantity.
   function addedTitle(id, qty) {
     const line = lines.get(id);
@@ -412,44 +393,44 @@
         String(isFavourite(+button.dataset.favourite)),
       );
     }
-    renderPlantListState();
+    renderFishListState();
   }
 
-  /* Plant modal */
+  /* Fish modal */
 
   const modal = { id: null, photo: 0, qty: 1 };
-  const plantDialog = $("#plant-dialog");
-  const plantBody = $("#plant-dialog-body");
-  const plantPanel = $(".product-modal__panel", plantDialog);
-  const plantTrack = $(".product-modal__track", plantDialog);
-  const peeks = $$(".product-modal__peek", plantDialog);
+  const fishDialog = $("#fish-dialog");
+  const fishBody = $("#fish-dialog-body");
+  const fishPanel = $(".product-modal__panel", fishDialog);
+  const fishTrack = $(".product-modal__track", fishDialog);
+  const peeks = $$(".product-modal__peek", fishDialog);
   const lightbox = $("#lightbox");
   const pageURL = () => location.pathname + location.search;
 
   // Previous and next follow the grid as currently sorted and filtered. A
-  // plant opened from a deep link may be filtered out, so then the full list
+  // fish opened from a deep link may be filtered out, so then the full list
   // is used instead.
   function visibleOrder() {
-    const visible = $$(".zone:not([hidden]) .product-grid__item:not([hidden])")
+    const visible = $$(".group:not([hidden]) .product-grid__item:not([hidden])")
       .map((item) => +item.dataset.id);
     return visible.includes(modal.id)
       ? visible
       : $$(".product-grid__item").map((item) => +item.dataset.id);
   }
 
-  function galleryHTML(plant) {
-    const count = plant.photos.length;
-    const slides = plant.photos
+  function galleryHTML(fish) {
+    const count = fish.photos.length;
+    const slides = fish.photos
       .map(
         (photo, i) => `<figure class="gallery__slide" role="group" aria-label="Photo ${i + 1} of ${count}">
           <button type="button" class="gallery__zoom" data-zoom="${i}" aria-label="View photo ${i + 1} full screen">
-            <img src="${esc(photo.src)}" alt="${esc(`${plant.name}: ${photo.caption}`)}" width="720" height="720" loading="${i ? "lazy" : "eager"}" decoding="async">
+            <img src="${esc(photo.src)}" alt="${esc(`${fish.name}: ${photo.caption}`)}" width="720" height="720" loading="${i ? "lazy" : "eager"}" decoding="async">
           </button>
           <figcaption class="gallery__caption">${credit(photo)}</figcaption>
         </figure>`,
       )
       .join("");
-    const thumbs = plant.photos
+    const thumbs = fish.photos
       .map(
         (photo, i) => `<li><button type="button" class="gallery__thumb" data-goto="${i}" aria-label="Show photo ${i + 1}"${i === 0 ? ' aria-current="true"' : ""}>
           <img src="${esc(photo.src)}" alt="" width="120" height="120" loading="lazy" decoding="async">
@@ -457,7 +438,7 @@
       )
       .join("");
     return `<div class="gallery">
-      <div class="gallery__viewport" tabindex="0" role="region" aria-label="${esc(plant.name)} photos, use the arrow keys to browse">${slides}</div>
+      <div class="gallery__viewport" tabindex="0" role="region" aria-label="${esc(fish.name)} photos, use the arrow keys to browse">${slides}</div>
       <div class="gallery__nav">
         <button type="button" class="icon-button" data-photo="-1" aria-label="Previous photo" disabled>${ICONS.prev}</button>
         <span class="gallery__counter" aria-live="polite">1 / ${count}</span>
@@ -473,58 +454,58 @@
       ${body}
     </section>`;
 
-  const plantBodyHTML = (plant, qty) =>
-    `<div class="product__media">${galleryHTML(plant)}</div>
-    <div class="product__info">${plantInfoHTML(plant, qty)}</div>`;
+  const fishBodyHTML = (fish, qty) =>
+    `<div class="product__media">${galleryHTML(fish)}</div>
+    <div class="product__info">${fishInfoHTML(fish, qty)}</div>`;
 
-  function plantInfoHTML(plant, qty) {
-    const conditions = `<dl class="conditions">${plant.conditions
+  function fishInfoHTML(fish, qty) {
+    const conditions = `<dl class="conditions">${fish.conditions
       .map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`)
       .join("")}</dl>`;
-    const sources = `<ul class="link-list">${plant.sources
+    const sources = `<ul class="link-list">${fish.sources
       .map((source) => `<li>${external(source.url, esc(source.label))}</li>`)
       .join("")}</ul>`;
 
-    return `<p class="product__zone">${esc(plant.zone.name)}</p>
-      <h2 class="product__title" id="plant-dialog-title">${esc(plant.name)}</h2>
-      <p class="product__sub">${esc(plant.scientific)}</p>
-      <span class="diff" data-d="${plant.difficulty}">Difficulty: ${plant.difficulty}</span>
-      ${plantPriceHTML(plant)}
+    return `<p class="product__group">${esc(fish.group.name)}</p>
+      <h2 class="product__title" id="fish-dialog-title">${esc(fish.name)}</h2>
+      <p class="product__sub">${esc(fish.scientific)}</p>
+      <span class="diff" data-d="${fish.difficulty}">Difficulty: ${fish.difficulty}</span>
+      ${fishPriceHTML(fish)}
       <div class="product__form">
-        ${quantityHTML("plant", plant.name, qty)}
-        <button type="button" class="button button--secondary product__favourite" data-favourite="${plant.id}" aria-pressed="${isFavourite(plant.id)}">${ICONS.heart}<span>Favourite</span></button>
-        <button type="button" class="button product__add" id="plant-add">Add to list</button>
+        ${quantityHTML("fish", fish.name, qty)}
+        <button type="button" class="button button--secondary product__favourite" data-favourite="${fish.id}" aria-pressed="${isFavourite(fish.id)}">${ICONS.heart}<span>Favourite</span></button>
+        <button type="button" class="button product__add" id="fish-add">Add to list</button>
       </div>
-      <div class="product__in-list" id="plant-in-list" hidden></div>
-      <p class="product__about">${esc(plant.about)}</p>
-      ${plant.offers.length ? section("Where to buy", `${storesHTML(plant)}<p class="product__checked">${checkedNote([{ plant }])}</p>`) : ""}
-      ${section("Growing conditions", conditions)}
-      ${plant.saNote ? section("South Australia", `<p>${esc(plant.saNote)}</p>`) : ""}
+      <div class="product__in-list" id="fish-in-list" hidden></div>
+      <p class="product__about">${esc(fish.about)}</p>
+      ${fish.offers.length ? section("Where to buy", `${storesHTML(fish)}<p class="product__checked">${checkedNote([{ fish }])}</p>`) : ""}
+      ${section("Care", conditions)}
+      ${fish.saNote ? section("South Australia", `<p>${esc(fish.saNote)}</p>`) : ""}
       ${section("Sources", sources)}`;
   }
 
-  function plantPriceHTML(plant) {
-    if (plant.price === null)
+  function fishPriceHTML(fish) {
+    if (fish.price === null)
       return '<div class="product__price"><span class="price__none">No Australian store listing with a price was found.</span></div>';
     return `<div class="product__price">
-        <span class="price__current">${money(plant.price)}</span>
-        <p class="product__price-note">${esc(averageLabel(plant))}</p>
+        <span class="price__current">${money(fish.price)}</span>
+        <p class="product__price-note">${esc(averageLabel(fish))}</p>
       </div>`;
   }
 
-  function renderPlantListState() {
+  function renderFishListState() {
     if (modal.id === null) return;
     if (!lines.get(modal.id).selected && modal.qty < 1) modal.qty = 1;
-    renderLineState(plantBody, modal.id, modal.qty);
+    renderLineState(fishBody, modal.id, modal.qty);
     for (const peek of peeks)
       if (peek.dataset.id)
         renderLineState(peek, +peek.dataset.id, startQty(+peek.dataset.id));
   }
 
-  // A plant in the list can go down to 0, which removes it on update, and
+  // A fish in the list can go down to 0, which removes it on update, and
   // updating is only offered once the quantity differs from the list's.
   function renderLineState(root, id, qty) {
-    const plant = byId.get(id);
+    const fish = byId.get(id);
     const line = lines.get(id);
     const min = line.selected ? 0 : 1;
     const input = $(".quantity__input", root);
@@ -542,7 +523,7 @@
       return;
     }
     box.innerHTML = `<p>In your list: ${line.qty}.</p>
-      <button type="button" class="link-button" data-remove="${plant.id}" aria-label="Remove ${esc(plant.name)} from list">Remove from list</button>
+      <button type="button" class="link-button" data-remove="${fish.id}" aria-label="Remove ${esc(fish.name)} from list">Remove from list</button>
       <a href="list.html">View list</a>`;
   }
 
@@ -551,37 +532,37 @@
       Math.trunc(Number(qty)) <= 0 && lines.get(modal.id).selected
         ? 0
         : clampQty(qty);
-    renderPlantListState();
+    renderFishListState();
   }
 
-  function openPlant(id) {
-    const plant = byId.get(id);
-    if (!plant) return;
+  function openFish(id) {
+    const fish = byId.get(id);
+    if (!fish) return;
     Object.assign(modal, { id, photo: 0, qty: startQty(id) });
-    plantBody.innerHTML = plantBodyHTML(plant, modal.qty);
+    fishBody.innerHTML = fishBodyHTML(fish, modal.qty);
 
     const order = visibleOrder();
     const index = order.indexOf(id);
     renderPeeks(order, index);
-    renderPlantListState();
-    $("#plant-position").textContent = `${index + 1} of ${order.length}`;
-    $('[data-step="-1"]', plantDialog).disabled = index <= 0;
-    $('[data-step="1"]', plantDialog).disabled = index >= order.length - 1;
+    renderFishListState();
+    $("#fish-position").textContent = `${index + 1} of ${order.length}`;
+    $('[data-step="-1"]', fishDialog).disabled = index <= 0;
+    $('[data-step="1"]', fishDialog).disabled = index >= order.length - 1;
 
     // Opening the modal adds a history entry, so back (including the edge
-    // swipe, which a page can't block) closes it. Moving between plants
+    // swipe, which a page can't block) closes it. Moving between fish
     // replaces that entry. A deep link's own entry loses its hash first, so
     // back from it lands on the plain page.
-    const url = `#plant-${id}`;
-    if (plantDialog.open || history.state?.plant)
+    const url = `#fish-${id}`;
+    if (fishDialog.open || history.state?.fish)
       history.replaceState(history.state, "", url);
     else {
-      if (location.hash.startsWith("#plant-"))
+      if (location.hash.startsWith("#fish-"))
         history.replaceState(history.state, "", pageURL());
-      history.pushState({ ...history.state, plant: true }, "", url);
+      history.pushState({ ...history.state, fish: true }, "", url);
     }
-    bringToFront(plantDialog);
-    plantPanel.scrollTop = 0;
+    bringToFront(fishDialog);
+    fishPanel.scrollTop = 0;
   }
 
   function startQty(id) {
@@ -589,31 +570,31 @@
     return line.selected ? line.qty : 1;
   }
 
-  // The previous and next plants are rendered either side of the current one
+  // The previous and next fish are rendered either side of the current one
   // so a swipe can drag them into view. They are inert copies with the ids
   // removed, and their first photos load now so they are ready to show.
   function renderPeeks(order, index) {
     for (const peek of peeks) {
-      const plant = byId.get(order[index + +peek.dataset.peek]);
-      peek.dataset.id = plant?.id ?? "";
-      peek.innerHTML = plant ? plantBodyHTML(plant, startQty(plant.id)) : "";
+      const fish = byId.get(order[index + +peek.dataset.peek]);
+      peek.dataset.id = fish?.id ?? "";
+      peek.innerHTML = fish ? fishBodyHTML(fish, startQty(fish.id)) : "";
       for (const el of $$("[id]", peek)) el.removeAttribute("id");
     }
   }
 
-  function stepPlant(step, { focus = true } = {}) {
+  function stepFish(step, { focus = true } = {}) {
     const order = visibleOrder();
     const next = order[order.indexOf(modal.id) + step];
     if (next === undefined) return;
-    openPlant(next);
+    openFish(next);
     if (!focus) return;
     // Keep focus on the button that was pressed so repeated presses work;
     // fall back to the other direction once the end is reached.
-    const same = $(`[data-step="${step}"]`, plantDialog);
-    (same.disabled ? $(`[data-step="${-step}"]`, plantDialog) : same).focus();
+    const same = $(`[data-step="${step}"]`, fishDialog);
+    (same.disabled ? $(`[data-step="${-step}"]`, fishDialog) : same).focus();
   }
 
-  // A sideways swipe anywhere but the photos drags the plant aside, with the
+  // A sideways swipe anywhere but the photos drags the fish aside, with the
   // previous or next one following it in, and steps once it is let go far
   // enough or flicked. Swipes from the screen edges are left to the browser,
   // which uses them for back and forward. The direction is decided on the
@@ -628,7 +609,7 @@
   const peekFor = (step) =>
     peeks.find((peek) => +peek.dataset.peek === step && peek.dataset.id);
 
-  plantDialog.addEventListener(
+  fishDialog.addEventListener(
     "touchstart",
     (event) => {
       const [touch] = event.touches;
@@ -644,7 +625,7 @@
     { passive: true },
   );
 
-  plantDialog.addEventListener(
+  fishDialog.addEventListener(
     "touchmove",
     (event) => {
       if (!swipe) return;
@@ -671,14 +652,14 @@
         swipe.v = (dx - swipe.dx) / (now - swipe.t);
       swipe.dx = dx;
       swipe.t = now;
-      // Resist past the first and last plant.
+      // Resist past the first and last fish.
       const offset = peekFor(dx < 0 ? 1 : -1) ? dx : dx / 3;
-      plantTrack.style.transform = `translate3d(${offset}px, 0, 0)`;
+      fishTrack.style.transform = `translate3d(${offset}px, 0, 0)`;
     },
     { passive: false },
   );
 
-  plantDialog.addEventListener(
+  fishDialog.addEventListener(
     "touchend",
     () => {
       if (!swipe?.dragging) {
@@ -688,7 +669,7 @@
       const { dx, v = 0 } = swipe;
       swipe = null;
       const step = dx < 0 ? 1 : -1;
-      const width = plantTrack.clientWidth;
+      const width = fishTrack.clientWidth;
       const go =
         peekFor(step) &&
         (Math.abs(dx) > width / 3 ||
@@ -698,7 +679,7 @@
     { passive: true },
   );
 
-  plantDialog.addEventListener(
+  fishDialog.addEventListener(
     "touchcancel",
     () => {
       if (swipe?.dragging) settle(0, 0);
@@ -708,16 +689,16 @@
   );
 
   // The neighbours show their tops in the visible part of the panel, as they
-  // will look once stepped to, however far the current plant is scrolled.
+  // will look once stepped to, however far the current fish is scrolled.
   function startDrag() {
-    const bar = $(".product-modal__bar", plantDialog).getBoundingClientRect();
-    const track = plantTrack.getBoundingClientRect();
-    const panel = plantPanel.getBoundingClientRect();
+    const bar = $(".product-modal__bar", fishDialog).getBoundingClientRect();
+    const track = fishTrack.getBoundingClientRect();
+    const panel = fishPanel.getBoundingClientRect();
     for (const peek of peeks) {
       peek.style.top = `${Math.max(0, bar.bottom - track.top)}px`;
       peek.style.height = `${panel.bottom - Math.max(bar.bottom, track.top)}px`;
     }
-    plantTrack.classList.add("is-dragging");
+    fishTrack.classList.add("is-dragging");
   }
 
   function settle(offset, step) {
@@ -726,20 +707,20 @@
     const finish = () => {
       if (done) return;
       done = true;
-      plantTrack.removeEventListener("transitionend", finish);
-      plantTrack.classList.remove("is-settling", "is-dragging");
-      // Step first, in the same frame as the reset, so the plant that slid
+      fishTrack.removeEventListener("transitionend", finish);
+      fishTrack.classList.remove("is-settling", "is-dragging");
+      // Step first, in the same frame as the reset, so the fish that slid
       // in is simply re-rendered in place.
-      if (step && plantDialog.open) stepPlant(step, { focus: false });
-      plantTrack.style.transform = "";
+      if (step && fishDialog.open) stepFish(step, { focus: false });
+      fishTrack.style.transform = "";
       for (const peek of peeks) peek.style.top = peek.style.height = "";
       settling = false;
     };
     if (reducedMotion()) return finish();
-    plantTrack.classList.add("is-settling");
-    plantTrack.addEventListener("transitionend", finish);
+    fishTrack.classList.add("is-settling");
+    fishTrack.addEventListener("transitionend", finish);
     setTimeout(finish, 400);
-    plantTrack.style.transform = `translate3d(${offset}px, 0, 0)`;
+    fishTrack.style.transform = `translate3d(${offset}px, 0, 0)`;
   }
 
   /* Gallery and lightbox */
@@ -747,18 +728,18 @@
   function showPhoto(index, { scroll = true } = {}) {
     const count = byId.get(modal.id).photos.length;
     modal.photo = Math.max(0, Math.min(count - 1, index));
-    $(".gallery__counter", plantBody).textContent =
+    $(".gallery__counter", fishBody).textContent =
       `${modal.photo + 1} / ${count}`;
-    $$(".gallery__thumb", plantBody).forEach((thumb, i) => {
+    $$(".gallery__thumb", fishBody).forEach((thumb, i) => {
       if (i === modal.photo) thumb.setAttribute("aria-current", "true");
       else thumb.removeAttribute("aria-current");
     });
-    $('[data-photo="-1"]', plantBody).disabled = modal.photo === 0;
-    $('[data-photo="1"]', plantBody).disabled = modal.photo === count - 1;
+    $('[data-photo="-1"]', fishBody).disabled = modal.photo === 0;
+    $('[data-photo="1"]', fishBody).disabled = modal.photo === count - 1;
     if (scroll) {
       // Behind the lightbox the gallery jumps, so it is already on the
       // right photo when the lightbox closes.
-      const viewport = $(".gallery__viewport", plantBody);
+      const viewport = $(".gallery__viewport", fishBody);
       viewport.scrollTo({
         left: modal.photo * viewport.clientWidth,
         behavior: reducedMotion() || lightbox.open ? "auto" : "smooth",
@@ -769,12 +750,12 @@
   const lightboxFrame = $(".lightbox__frame", lightbox);
 
   function openLightbox(index) {
-    const plant = byId.get(modal.id);
+    const fish = byId.get(modal.id);
     showPhoto(index, { scroll: false });
-    lightboxFrame.innerHTML = plant.photos
+    lightboxFrame.innerHTML = fish.photos
       .map(
-        (photo, i) => `<div class="lightbox__slide" role="group" aria-label="Photo ${i + 1} of ${plant.photos.length}">
-          <img src="${esc(photo.src)}" alt="${esc(`${plant.name}: ${photo.caption}`)}" decoding="async"${i === modal.photo ? "" : ' loading="lazy"'}>
+        (photo, i) => `<div class="lightbox__slide" role="group" aria-label="Photo ${i + 1} of ${fish.photos.length}">
+          <img src="${esc(photo.src)}" alt="${esc(`${fish.name}: ${photo.caption}`)}" decoding="async"${i === modal.photo ? "" : ' loading="lazy"'}>
         </div>`,
       )
       .join("");
@@ -785,8 +766,8 @@
   // Updates the caption and controls, and scrolls the strip to the current
   // photo unless the strip's own scrolling got it there.
   function renderLightbox({ scroll = true, smooth = true } = {}) {
-    const plant = byId.get(modal.id);
-    const photo = plant.photos[modal.photo];
+    const fish = byId.get(modal.id);
+    const photo = fish.photos[modal.photo];
     if (scroll)
       lightboxFrame.scrollTo({
         left: modal.photo * lightboxFrame.clientWidth,
@@ -794,10 +775,10 @@
       });
     $(".lightbox__caption", lightbox).innerHTML = credit(photo);
     $(".lightbox__counter", lightbox).textContent =
-      `${modal.photo + 1} / ${plant.photos.length}`;
+      `${modal.photo + 1} / ${fish.photos.length}`;
     $('[data-photo-step="-1"]', lightbox).disabled = modal.photo === 0;
     $('[data-photo-step="1"]', lightbox).disabled =
-      modal.photo === plant.photos.length - 1;
+      modal.photo === fish.photos.length - 1;
   }
 
   /* Events */
@@ -811,7 +792,7 @@
 
   const CLICK_ACTIONS = [
     [
-      "#zones a",
+      "#groups a",
       (el, event) => {
         const target = $(el.hash);
         if (!target || !isPlainClick(event)) return;
@@ -899,7 +880,7 @@
     ],
     ["[data-remove]", (el) => removeFromList(+el.dataset.remove)],
     [
-      "#plant-add",
+      "#fish-add",
       () => {
         if (modal.qty === 0) {
           removeFromList(modal.id);
@@ -910,7 +891,7 @@
         showAdded(title);
       },
     ],
-    ["[data-step]", (el) => stepPlant(Number(el.dataset.step))],
+    ["[data-step]", (el) => stepFish(Number(el.dataset.step))],
     ["[data-photo]", (el) => showPhoto(modal.photo + Number(el.dataset.photo))],
     ["[data-goto]", (el) => showPhoto(Number(el.dataset.goto))],
     [
@@ -930,11 +911,11 @@
     const target = event.target;
     if (!(target instanceof Element)) return;
 
-    const plantLink = target.closest("[data-open-plant]");
-    if (plantLink) {
+    const fishLink = target.closest("[data-open-fish]");
+    if (fishLink) {
       if (!isPlainClick(event)) return;
       event.preventDefault();
-      openPlant(+plantLink.dataset.openPlant);
+      openFish(+fishLink.dataset.openFish);
       return;
     }
     // Clicks on ::backdrop are dispatched to the dialog element itself. Each
@@ -959,7 +940,7 @@
 
   document.addEventListener("change", (event) => {
     const target = event.target;
-    if (target.matches('[data-qty="plant"]')) setModalQty(target.value);
+    if (target.matches('[data-qty="fish"]')) setModalQty(target.value);
   });
 
   $("#filter-form").addEventListener("input", () => {
@@ -1001,13 +982,13 @@
   // Scroll events fire far more often than frames, so the position is read
   // once per frame. Scroll does not bubble, hence the capture listener.
   let scrollFrame;
-  plantDialog.addEventListener(
+  fishDialog.addEventListener(
     "scroll",
     (event) => {
       const viewport = event.target;
       if (
         !viewport.classList?.contains("gallery__viewport") ||
-        !plantBody.contains(viewport)
+        !fishBody.contains(viewport)
       )
         return;
       cancelAnimationFrame(scrollFrame);
@@ -1047,19 +1028,19 @@
     if (event.newState === "closed") clearTimeout(addedTimer);
   });
 
-  plantDialog.addEventListener("close", () => {
-    if (plantDialog.open || "reopening" in plantDialog.dataset) return;
+  fishDialog.addEventListener("close", () => {
+    if (fishDialog.open || "reopening" in fishDialog.dataset) return;
     if (lightbox.open) lightbox.close();
-    if (plantDialog.contains(added)) hideAdded();
+    if (fishDialog.contains(added)) hideAdded();
     modal.id = null;
     // Closed with the button, Escape or the backdrop: step back off the
     // modal's own entry. Closed by going back: the hash is already gone.
-    if (history.state?.plant) history.back();
-    else if (location.hash.startsWith("#plant-"))
+    if (history.state?.fish) history.back();
+    else if (location.hash.startsWith("#fish-"))
       history.replaceState(history.state, "", pageURL());
   });
 
-  $("#zone-sections").addEventListener("pointerover", (event) => {
+  $("#group-sections").addEventListener("pointerover", (event) => {
     if (event.pointerType !== "mouse") return;
     const img = event.target
       .closest?.(".card")
@@ -1079,13 +1060,10 @@
     true,
   );
   function syncHash() {
-    const match = /^#plant-(\d+)$/.exec(location.hash);
-    if (match && byId.has(+match[1])) openPlant(+match[1]);
-    // #plant-cart was the cart's address in the earlier version of the page;
-    // the list page has taken its place.
-    else if (location.hash === "#plant-cart") location.replace("list.html");
-    // Back from an open plant.
-    else if (plantDialog.open) plantDialog.close();
+    const match = /^#fish-(\d+)$/.exec(location.hash);
+    if (match && byId.has(+match[1])) openFish(+match[1]);
+    // Back from an open fish.
+    else if (fishDialog.open) fishDialog.close();
   }
   window.addEventListener("hashchange", syncHash);
 
@@ -1142,7 +1120,7 @@
     });
   }
 
-  renderZones();
+  renderGroups();
   renderFacetForm();
   onCartChange(renderListState);
   renderListState();

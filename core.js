@@ -1,20 +1,18 @@
-// Shared by the plant list (app.js) and the list page (list.js): helpers, the
-// derived plant model and the saved list.
+// Shared by the fish list (app.js) and the list page (list.js): helpers, the
+// derived fish model and the saved list.
 (() => {
   "use strict";
 
-  const { zones } = globalThis.PLANT_CATALOGUE;
+  const { groups } = globalThis.FISH_CATALOGUE;
 
-  // Both keys and the per control state shape come from the earlier static
-  // page; keeping them means lists saved by that version still load.
-  const STORAGE_KEY = "plant-shortlist-native-cart-v1";
-  const LEGACY_STORAGE_KEY = "plant-shortlist-cart-v1";
-  // Favourites are plants being considered but not yet in the list, saved as
-  // an array of plant ids.
-  const FAVOURITES_KEY = "plant-shortlist-favourites-v1";
+  // The list is saved as an object keyed by fish id, each holding whether
+  // the fish is in the list and its quantity.
+  const STORAGE_KEY = "fish-shortlist-list-v1";
+  // Favourites are fish being considered but not yet in the list, saved as
+  // an array of fish ids.
+  const FAVOURITES_KEY = "fish-shortlist-favourites-v1";
   const MAX_QTY = 99;
   const DIFFICULTY = ["Easy", "Moderate", "Demanding"];
-  const LIGHT_LEVELS = ["Low", "Medium", "High"];
 
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [
@@ -40,29 +38,16 @@
   function formatChecked(value) {
     const [year, month, day] = value.split("-").map(Number);
     return new Intl.DateTimeFormat("en-AU", {
-      timeZone: "UTC",
+      timeGroup: "UTC",
       year: "numeric",
       month: "long",
       ...(day ? { day: "numeric" } : {}),
     }).format(new Date(Date.UTC(year, month - 1, day || 1)));
   }
 
-  // Light is free text ("Low to medium", "Bright, indirect"), so it is mapped
-  // onto three levels to make it filterable. A range covers every level
-  // between its ends, and the emersed plants' "bright" counts as high.
-  function lightLevels(text) {
-    const found = [
-      ...text.toLowerCase().matchAll(/low|medium|high|bright/g),
-    ].map(([word]) =>
-      word === "bright" ? 2 : ["low", "medium", "high"].indexOf(word),
-    );
-    if (!found.length) return [];
-    return LIGHT_LEVELS.slice(Math.min(...found), Math.max(...found) + 1);
-  }
-
-  // The price shown for a plant is the average of every store's listed
+  // The price shown for a fish is the average of every store's listed
   // price, as a rough guide to what a local shop will charge. Stock is left
-  // out, since a sold out listing still says what the plant costs.
+  // out, since a sold out listing still says what the fish costs.
   const averagePrice = (offers) =>
     offers.length
       ? Math.round(
@@ -70,26 +55,25 @@
         )
       : null;
 
-  const plants = zones.flatMap((zone) =>
-    zone.plants.map((plant) => {
-      const conditions = Object.fromEntries(plant.conditions);
+  const fishes = groups.flatMap((group) =>
+    group.species.map((fish) => {
+      const conditions = Object.fromEntries(fish.conditions);
       return {
-        ...plant,
-        zone,
+        ...fish,
+        group,
         conditionMap: conditions,
-        searchText: `${plant.name} ${plant.scientific}`.toLowerCase(),
-        price: averagePrice(plant.offers),
-        light: lightLevels(conditions.Light ?? ""),
+        searchText: `${fish.name} ${fish.scientific}`.toLowerCase(),
+        price: averagePrice(fish.offers),
       };
     }),
   );
-  plants.forEach((plant, index) => (plant.order = index));
-  const byId = new Map(plants.map((plant) => [plant.id, plant]));
+  fishes.forEach((fish, index) => (fish.order = index));
+  const byId = new Map(fishes.map((fish) => [fish.id, fish]));
 
   /* Markup */
 
   const ICONS = {
-    leaf: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14Z"/><path d="M5 19 13 11"/></svg>',
+    fish: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12c3.5-6 10-6.5 15 0-5 6.5-11.5 6-15 0Z"/><path d="m17 12 5-4v8Z"/><path d="M7 11h.01"/></svg>',
     close:
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
     prev: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>',
@@ -104,9 +88,9 @@
   const credit = (photo) =>
     `${esc(photo.caption)}${photo.credit ? ` ${external(photo.creditUrl, esc(photo.credit))}` : ""}`;
 
-  // Every store listing a plant, with its price and a link.
-  function storesHTML(plant) {
-    return `<ul class="stores" role="list">${plant.offers
+  // Every store listing a fish, with its price and a link.
+  function storesHTML(fish) {
+    return `<ul class="stores" role="list">${fish.offers
       .map(
         (offer) => `<li class="stores__item">
           <span>${external(offer.url, `${esc(offer.shop)} ↗`)}${offer.unit ? `<span class="stores__unit">${esc(offer.unit)}</span>` : ""}</span>
@@ -116,10 +100,10 @@
       .join("")}</ul>`;
   }
 
-  const averageLabel = (plant) =>
-    plant.offers.length > 1
-      ? `Average of ${plant.offers.length} stores`
-      : `From ${plant.offers[0].shop}`;
+  const averageLabel = (fish) =>
+    fish.offers.length > 1
+      ? `Average of ${fish.offers.length} stores`
+      : `From ${fish.offers[0].shop}`;
 
   function quantityHTML(key, name, qty) {
     return `<div class="quantity">
@@ -130,7 +114,7 @@
   }
 
   // The stepper buttons change the input and then let the page's change
-  // handler clamp and apply the new value, since the plant modal allows 0.
+  // handler clamp and apply the new value, since the fish modal allows 0.
   function stepQuantity(button) {
     const input = $(".quantity__input", button.parentElement);
     input.value = Number(input.value) + Number(button.dataset.qtyStep);
@@ -139,76 +123,34 @@
 
   /* Saved list */
 
-  // Every plant keeps a line in or out of the list, so a plant added again
-  // comes back with its last quantity and shop, and the saved state keeps the
-  // same shape as the earlier version's form controls. Lines no longer pick
-  // a shop, since prices are averaged, but the saved shop is kept as is.
-  const freshLine = (plant) => ({
-    selected: false,
-    qty: 1,
-    offer: plant.defaultOffer,
-  });
-  const lines = new Map(plants.map((plant) => [plant.id, freshLine(plant)]));
+  // Every fish keeps a line in or out of the list, so a fish added again
+  // comes back with its last quantity.
+  const freshLine = () => ({ selected: false, qty: 1 });
+  const lines = new Map(fishes.map((fish) => [fish.id, freshLine()]));
   const listeners = [];
   let storageOk = true;
 
-  function migrateLegacy(raw) {
-    const legacy = JSON.parse(raw || "[]");
-    if (!Array.isArray(legacy) || !legacy.length) return null;
-    const state = {};
-    for (const entry of legacy) {
-      const plant = byId.get(entry?.id);
-      if (
-        !plant ||
-        !Number.isInteger(entry.quantity) ||
-        entry.quantity < 1 ||
-        entry.quantity > MAX_QTY
-      )
-        continue;
-      state[`native-selected-${plant.id}`] = true;
-      state[`native-quantity-${plant.id}`] = String(entry.quantity);
-      if (plant.offers[entry.offerId])
-        plant.offers.forEach((_, i) => {
-          state[`native-shop-${plant.id}-${i}`] = i === entry.offerId;
-        });
-    }
-    return state;
-  }
-
   function restoreCart() {
-    for (const plant of plants) lines.set(plant.id, freshLine(plant));
+    for (const fish of fishes) lines.set(fish.id, freshLine());
     let state = null;
     try {
-      state =
-        JSON.parse(localStorage.getItem(STORAGE_KEY) || "null") ??
-        migrateLegacy(localStorage.getItem(LEGACY_STORAGE_KEY));
+      state = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
     } catch {
       /* Invalid or unavailable storage leaves the default list usable. */
     }
     if (!state || typeof state !== "object" || Array.isArray(state)) return;
-    for (const plant of plants) {
-      const line = lines.get(plant.id);
-      const selected = state[`native-selected-${plant.id}`];
-      if (typeof selected === "boolean") line.selected = selected;
-      const qty = Number(state[`native-quantity-${plant.id}`]);
+    for (const fish of fishes) {
+      const saved = state[fish.id];
+      if (!saved || typeof saved !== "object") continue;
+      const line = lines.get(fish.id);
+      if (typeof saved.selected === "boolean") line.selected = saved.selected;
+      const qty = Number(saved.qty);
       if (Number.isInteger(qty) && qty >= 1 && qty <= MAX_QTY) line.qty = qty;
-      const offer = plant.offers.findIndex(
-        (_, i) => state[`native-shop-${plant.id}-${i}`] === true,
-      );
-      if (offer >= 0) line.offer = offer;
     }
   }
 
   function saveCart() {
-    const state = {};
-    for (const plant of plants) {
-      const line = lines.get(plant.id);
-      state[`native-selected-${plant.id}`] = line.selected;
-      state[`native-quantity-${plant.id}`] = String(line.qty);
-      plant.offers.forEach((_, i) => {
-        state[`native-shop-${plant.id}-${i}`] = i === line.offer;
-      });
-    }
+    const state = Object.fromEntries(lines);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       storageOk = true;
@@ -221,8 +163,8 @@
 
   const favourites = new Set();
 
-  // Adding a plant to the list takes it out of favourites. Older saves can
-  // still have both, so plants in the list are skipped here (restoreCart runs
+  // Adding a fish to the list takes it out of favourites. Older saves can
+  // still have both, so fish in the list are skipped here (restoreCart runs
   // first).
   function restoreFavourites() {
     favourites.clear();
@@ -247,7 +189,7 @@
 
   const isFavourite = (id) => favourites.has(id);
 
-  // A plant is never both in the list and a favourite, so favouriting a plant
+  // A fish is never both in the list and a favourite, so favouriting a fish
   // in the list moves it out of the list.
   function setFavourite(id, on) {
     if (on) favourites.add(id);
@@ -261,33 +203,33 @@
     notify();
   }
 
-  // Favourited plants, in catalogue order.
-  const consideredPlants = () =>
-    plants.filter((plant) => favourites.has(plant.id));
+  // Favourited fish, in catalogue order.
+  const consideredFish = () =>
+    fishes.filter((fish) => favourites.has(fish.id));
 
   function cartSummary() {
     let count = 0;
     let total = 0;
     let unknown = 0;
-    const groups = [];
-    for (const zone of zones) {
-      const entries = zone.plants
-        .map(({ id }) => ({ plant: byId.get(id), line: lines.get(id) }))
+    const listed = [];
+    for (const group of groups) {
+      const entries = group.species
+        .map(({ id }) => ({ fish: byId.get(id), line: lines.get(id) }))
         .filter(({ line }) => line.selected)
         .map((entry) => ({
           ...entry,
-          sum: (entry.plant.price ?? 0) * entry.line.qty,
+          sum: (entry.fish.price ?? 0) * entry.line.qty,
         }));
       if (!entries.length) continue;
       const subtotal = entries.reduce((sum, entry) => sum + entry.sum, 0);
       for (const entry of entries) {
         count += entry.line.qty;
-        if (entry.plant.price === null) unknown += entry.line.qty;
+        if (entry.fish.price === null) unknown += entry.line.qty;
       }
       total += subtotal;
-      groups.push({ zone, entries, subtotal });
+      listed.push({ group, entries, subtotal });
     }
-    return { groups, count, total, unknown };
+    return { groups: listed, count, total, unknown };
   }
 
   function renderBadges() {
@@ -326,7 +268,7 @@
 
   function clearCart() {
     updateCart(() => {
-      for (const plant of plants) lines.set(plant.id, freshLine(plant));
+      for (const fish of fishes) lines.set(fish.id, freshLine());
     });
   }
 
@@ -351,7 +293,7 @@
 
   function checkedNote(entries) {
     const dates = entries
-      .flatMap((entry) => entry.plant.offers.map((offer) => offer.checked))
+      .flatMap((entry) => entry.fish.offers.map((offer) => offer.checked))
       .sort();
     if (!dates.length) return "";
     const first = formatChecked(dates[0]);
@@ -363,15 +305,15 @@
 
   function cartText() {
     const { groups, total, unknown } = cartSummary();
-    const out = ["Plant shortlist", ""];
-    for (const { zone, entries, subtotal } of groups) {
-      out.push(`${zone.name} (${money(subtotal)})`);
-      for (const { plant, line, sum } of entries) {
-        out.push(`- ${plant.name} (${plant.scientific}) x ${line.qty}`);
+    const out = ["Fish shortlist", ""];
+    for (const { group, entries, subtotal } of groups) {
+      out.push(`${group.name} (${money(subtotal)})`);
+      for (const { fish, line, sum } of entries) {
+        out.push(`- ${fish.name} (${fish.scientific}) x ${line.qty}`);
         out.push(
-          plant.price === null
+          fish.price === null
             ? "  No price listed"
-            : `  About ${money(plant.price)} each (${averageLabel(plant).toLowerCase()}), ${money(sum)}`,
+            : `  About ${money(fish.price)} each (${averageLabel(fish).toLowerCase()}), ${money(sum)}`,
         );
       }
       out.push("");
@@ -398,7 +340,7 @@
       fallback.setAttribute("role", "img");
       fallback.setAttribute("aria-label", `${img.alt} (photo unavailable)`);
     } else fallback.setAttribute("aria-hidden", "true");
-    fallback.innerHTML = `${ICONS.leaf}<span>Photo unavailable</span>`;
+    fallback.innerHTML = `${ICONS.fish}<span>Photo unavailable</span>`;
     img.replaceWith(fallback);
   }
 
@@ -416,13 +358,12 @@
   restoreFavourites();
   renderBadges();
 
-  globalThis.PLANT_CORE = {
-    zones,
-    plants,
+  globalThis.FISH_CORE = {
+    groups,
+    fishes,
     byId,
     MAX_QTY,
     DIFFICULTY,
-    LIGHT_LEVELS,
     $,
     $$,
     esc,
@@ -449,7 +390,7 @@
     clearCart,
     isFavourite,
     setFavourite,
-    consideredPlants,
+    consideredFish,
     storageOk: () => storageOk,
   };
 })();

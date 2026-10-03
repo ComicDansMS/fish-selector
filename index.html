@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
-    <title>Plant shortlist: aquarium plants, South Australia</title>
+    <title>Fish shortlist: aquarium fish, South Australia</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -14,12 +14,12 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
-    <script src="plants.js" defer></script>
+    <script src="fish.js" defer></script>
     <script src="core.js" defer></script>
     <script src="app.js" defer></script>
   </head>
   <body>
-    <h1 class="visually-hidden">Plant shortlist</h1>
+    <h1 class="visually-hidden">Fish shortlist</h1>
 
     <div class="toolbar">
       <div class="page-width">
@@ -29,7 +29,7 @@
             id="q"
             class="search"
             type="search"
-            placeholder="Search plants"
+            placeholder="Search fish"
             autocomplete="off"
           />
           <button
@@ -73,17 +73,17 @@
           <p class="result-count" id="result-count" aria-live="polite"></p>
           <ul class="active-facets" id="active-facets" hidden></ul>
         </div>
-        <nav class="zones" id="zones" aria-label="Jump to a group"></nav>
+        <nav class="groups" id="groups" aria-label="Jump to a group"></nav>
       </div>
     </div>
 
     <main class="page-width catalogue" id="list">
       <noscript>
-        <p class="notice">This page needs JavaScript to show the plant list.</p>
+        <p class="notice">This page needs JavaScript to show the fish list.</p>
       </noscript>
-      <div id="zone-sections"></div>
+      <div id="group-sections"></div>
       <div class="empty" id="empty" hidden>
-        <h2>No plants match</h2>
+        <h2>No fish match</h2>
         <p>Try a different name, or clear the search and filters.</p>
         <button type="button" class="button button--secondary" id="clear-all">
           Clear search and filters
@@ -96,9 +96,9 @@
 
     <dialog
       class="product-modal"
-      id="plant-dialog"
+      id="fish-dialog"
       tabindex="-1"
-      aria-labelledby="plant-dialog-title"
+      aria-labelledby="fish-dialog-title"
     >
       <div class="product-modal__panel">
         <div class="product-modal__bar">
@@ -106,18 +106,18 @@
             type="button"
             class="icon-button"
             data-step="-1"
-            aria-label="Previous plant"
+            aria-label="Previous fish"
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="m14 6-6 6 6 6" />
             </svg>
           </button>
-          <span class="product-modal__position" id="plant-position"></span>
+          <span class="product-modal__position" id="fish-position"></span>
           <button
             type="button"
             class="icon-button"
             data-step="1"
-            aria-label="Next plant"
+            aria-label="Next fish"
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="m10 6 6 6-6 6" />
@@ -127,7 +127,7 @@
             type="button"
             class="icon-button product-modal__close"
             data-close
-            aria-label="Close plant details"
+            aria-label="Close fish details"
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M6 6l12 12M18 6 6 18" />
@@ -136,7 +136,7 @@
         </div>
         <div class="product-modal__track">
           <div class="product product-modal__peek" data-peek="-1" inert></div>
-          <div class="product" id="plant-dialog-body"></div>
+          <div class="product" id="fish-dialog-body"></div>
           <div class="product product-modal__peek" data-peek="1" inert></div>
         </div>
       </div>
@@ -214,7 +214,7 @@
             Clear all
           </button>
           <button type="button" class="button" id="filters-apply" data-close>
-            Show plants
+            Show fish
           </button>
         </div>
       </div>

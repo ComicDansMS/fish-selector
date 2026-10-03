@@ -1,16 +1,16 @@
 :root {
-  --bg: #eef2ec;
-  --surface: #f8faf6;
-  --ink: #17302a;
-  --muted: #5c6f67;
-  --line: #cbd6ce;
-  --leaf: #3f7d58;
+  --bg: #ebf1f4;
+  --surface: #f7fafb;
+  --ink: #12293a;
+  --muted: #566b7a;
+  --line: #c7d5de;
+  --accent: #1d6b87;
   --amber: #a87a1c;
-  --rotala: #b4473a;
-  --thumb: #dde6df;
-  --focus: #2f6f9f;
-  --on-ink: #f8faf6;
-  --backdrop: rgb(15 26 23 / 0.55);
+  --coral: #c4513c;
+  --thumb: #d8e4ea;
+  --focus: #4b54c8;
+  --on-ink: #f7fafb;
+  --backdrop: rgb(10 22 32 / 0.55);
   --serif: "Newsreader", Georgia, "Times New Roman", serif;
   --sans:
     "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -25,32 +25,32 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0f1a17;
-    --surface: #15241f;
-    --ink: #e3ece6;
-    --muted: #9ab0a6;
-    --line: #26372f;
-    --leaf: #7fc199;
+    --bg: #0b1620;
+    --surface: #112230;
+    --ink: #e2edf3;
+    --muted: #94abba;
+    --line: #213646;
+    --accent: #6cc0db;
     --amber: #d9ad55;
-    --rotala: #e07a6b;
-    --thumb: #1d2e28;
-    --focus: #7db7e0;
-    --on-ink: #0f1a17;
+    --coral: #ef8a73;
+    --thumb: #182c3b;
+    --focus: #9ea6f2;
+    --on-ink: #0b1620;
     --backdrop: rgb(0 0 0 / 0.65);
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0f1a17;
-  --surface: #15241f;
-  --ink: #e3ece6;
-  --muted: #9ab0a6;
-  --line: #26372f;
-  --leaf: #7fc199;
+  --bg: #0b1620;
+  --surface: #112230;
+  --ink: #e2edf3;
+  --muted: #94abba;
+  --line: #213646;
+  --accent: #6cc0db;
   --amber: #d9ad55;
-  --rotala: #e07a6b;
-  --thumb: #1d2e28;
-  --focus: #7db7e0;
-  --on-ink: #0f1a17;
+  --coral: #ef8a73;
+  --thumb: #182c3b;
+  --focus: #9ea6f2;
+  --on-ink: #0b1620;
   --backdrop: rgb(0 0 0 / 0.65);
 }
 @media (min-width: 750px) {
@@ -84,7 +84,7 @@ body {
   font: 400 1rem/1.55 var(--sans);
 }
 a {
-  color: var(--leaf);
+  color: var(--accent);
   text-underline-offset: 2px;
 }
 :focus-visible {
@@ -168,7 +168,7 @@ header.top p {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--leaf);
+  color: var(--accent);
   font: inherit;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -328,7 +328,7 @@ button:disabled {
     width: 0.45rem;
     height: 0.45rem;
     border-radius: 50%;
-    background: var(--leaf);
+    background: var(--accent);
   }
   .cart-button {
     padding-inline: 0.6rem;
@@ -374,14 +374,14 @@ button:disabled {
   width: 0.95rem;
   height: 0.95rem;
 }
-.zones {
+.groups {
   display: flex;
   gap: 0.4rem;
   overflow-x: auto;
   padding-top: 0.6rem;
   scrollbar-width: none;
 }
-.zones a {
+.groups a {
   flex: none;
   padding: 0.3rem 0.75rem;
   border: 1px solid var(--line);
@@ -394,12 +394,12 @@ button:disabled {
 
 /* Groups and the product grid (Dawn's collection grid) */
 
-.zone {
+.group {
   padding-top: 1.75rem;
 }
 /* Each heading sticks below the toolbar until its group scrolls out and the
    next one takes over; it moves up to the top while the toolbar is hidden. */
-.zone__head {
+.group__head {
   position: sticky;
   top: calc(env(safe-area-inset-top, 0px) + var(--toolbar-bottom));
   z-index: 3;
@@ -411,24 +411,24 @@ button:disabled {
   padding: 0.75rem 0;
   background: var(--bg);
 }
-:root:has(.toolbar.is-hidden) .zone__head {
+:root:has(.toolbar.is-hidden) .group__head {
   top: env(safe-area-inset-top, 0px);
 }
 @media (prefers-reduced-motion: no-preference) {
-  .zone__head {
+  .group__head {
     transition: top 0.25s ease;
   }
 }
-.zone__head h2 {
+.group__head h2 {
   margin: 0;
   font: 600 1.7rem/1.15 var(--serif);
 }
-.zone__count {
+.group__count {
   margin: 0;
   color: var(--muted);
   font-size: 0.9rem;
 }
-.zone__intro {
+.group__intro {
   max-width: 46rem;
   margin: -0.35rem 0 1.25rem;
   color: var(--muted);
@@ -525,8 +525,8 @@ button:disabled {
 }
 .card__favourite[aria-pressed="true"] svg,
 .product__favourite[aria-pressed="true"] svg {
-  fill: var(--rotala);
-  stroke: var(--rotala);
+  fill: var(--coral);
+  stroke: var(--coral);
 }
 .card__info {
   display: flex;
@@ -543,7 +543,7 @@ button:disabled {
   color: var(--ink);
   text-decoration: none;
 }
-/* The whole card opens the plant; the quick add button sits above this. */
+/* The whole card opens the fish; the quick add button sits above this. */
 .card__link::after {
   content: "";
   position: absolute;
@@ -584,8 +584,8 @@ button:disabled {
   border-color: var(--ink);
 }
 .card__add[aria-pressed="true"] {
-  border-color: var(--leaf);
-  color: var(--leaf);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 .card__add[aria-pressed="true"] .card__add-label::before {
   content: "✓ ";
@@ -606,13 +606,13 @@ button:disabled {
   background: currentColor;
 }
 .diff[data-d="Easy"] {
-  color: var(--leaf);
+  color: var(--accent);
 }
 .diff[data-d="Moderate"] {
   color: var(--amber);
 }
 .diff[data-d="Demanding"] {
-  color: var(--rotala);
+  color: var(--coral);
 }
 
 .price {
@@ -684,7 +684,7 @@ dialog::backdrop {
   background: var(--backdrop);
 }
 
-/* Plant modal (Dawn's quick add modal and product page layout) */
+/* Fish modal (Dawn's quick add modal and product page layout) */
 
 /* Full screen, the dialog itself carries the background: iOS Safari tints
    its toolbar from a fixed element at the bottom of the screen, and a
@@ -744,8 +744,8 @@ dialog::backdrop {
   padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
 }
 
-/* The previous and next plants sit either side of the current one and are
-   dragged in by a swipe. Kept to the current plant's height so they never
+/* The previous and next fish sit either side of the current one and are
+   dragged in by a swipe. Kept to the current fish's height so they never
    add to the scroll; while dragging they are fitted to the visible part of
    the panel from JS. */
 .product-modal__track {
@@ -897,7 +897,7 @@ dialog::backdrop {
   box-shadow: 0 0 0 1px var(--ink);
 }
 
-.product__zone {
+.product__group {
   margin: 0;
   color: var(--muted);
   font-size: 0.9rem;
@@ -925,7 +925,7 @@ dialog::backdrop {
   font-size: 0.82rem;
 }
 .cart-line__warning {
-  color: var(--rotala);
+  color: var(--coral);
 }
 .stores {
   margin: 0.25rem 0 0;
@@ -990,7 +990,7 @@ dialog::backdrop {
 }
 .product__in-list p {
   margin: 0;
-  color: var(--leaf);
+  color: var(--accent);
 }
 .product__about {
   margin: 1.5rem 0;
@@ -1067,12 +1067,12 @@ dialog::backdrop {
   width: 100%;
   height: 100%;
   margin: 0;
-  color: #e3ece6;
-  background: rgb(5 10 8);
+  color: #e2edf3;
+  background: rgb(4 9 14);
 }
 .lightbox__panel {
   display: grid;
-  background: rgb(5 10 8 / 0.96);
+  background: rgb(4 9 14 / 0.96);
   grid-template-rows: minmax(0, 1fr) auto;
   height: 100%;
   padding: calc(3.5rem + env(safe-area-inset-top, 0px)) 1rem
@@ -1129,10 +1129,10 @@ dialog::backdrop {
   margin: 0.75rem auto 0;
   font-size: 0.85rem;
   text-align: center;
-  color: #b8c9c0;
+  color: #b3c6d2;
 }
 .lightbox__caption a {
-  color: #9fd4b3;
+  color: #8fd0e6;
 }
 .lightbox__nav {
   display: flex;
@@ -1287,7 +1287,7 @@ dialog::backdrop {
   padding: calc(1rem + env(safe-area-inset-top, 0px)) 1.25rem 1.25rem;
   border: 1px solid var(--line);
   background: var(--surface);
-  box-shadow: 0 0.5rem 2rem rgb(15 26 23 / 0.18);
+  box-shadow: 0 0.5rem 2rem rgb(10 22 32 / 0.18);
 }
 @media (min-width: 750px) {
   .added__panel {
@@ -1326,7 +1326,7 @@ dialog::backdrop {
   width: 1.1rem;
   height: 1.1rem;
   fill: none;
-  stroke: var(--leaf);
+  stroke: var(--accent);
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -1648,7 +1648,7 @@ dialog::backdrop {
   font-size: 0.82rem;
 }
 .cart__status {
-  color: var(--leaf);
+  color: var(--accent);
   font-size: 0.85rem;
 }
 .cart__status:empty {

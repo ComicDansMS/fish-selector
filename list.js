@@ -22,64 +22,64 @@
     removeFromCart,
     clearCart,
     setFavourite,
-    consideredPlants,
+    consideredFish,
     storageOk,
     ICONS,
-  } = globalThis.PLANT_CORE;
+  } = globalThis.FISH_CORE;
 
-  // Open items are remembered by plant so they stay open across re-renders.
+  // Open items are remembered by fish so they stay open across re-renders.
   const expanded = new Set();
   let removedId = null;
-  // Whether the last removal moved the plant to favourites.
+  // Whether the last removal moved the fish to favourites.
   let moved = false;
 
-  function itemHTML({ plant, line, sum }) {
-    const key = `list-${plant.id}`;
-    const priced = plant.price !== null;
+  function itemHTML({ fish, line, sum }) {
+    const key = `list-${fish.id}`;
+    const priced = fish.price !== null;
     const stores = priced
-      ? `<p class="cart-line__detail">${esc(averageLabel(plant))}</p>${storesHTML(plant)}`
-      : '<p class="cart-line__warning">No price was listed. This plant is excluded from the total.</p>';
-    return `<details class="list-item" data-line="${plant.id}"${expanded.has(plant.id) ? " open" : ""}>
+      ? `<p class="cart-line__detail">${esc(averageLabel(fish))}</p>${storesHTML(fish)}`
+      : '<p class="cart-line__warning">No price was listed. This fish is excluded from the total.</p>';
+    return `<details class="list-item" data-line="${fish.id}"${expanded.has(fish.id) ? " open" : ""}>
       <summary class="list-item__summary">
-        <img class="list-item__thumb" src="${esc(plant.photos[0].src)}" alt="" width="80" height="80" loading="lazy" decoding="async">
+        <img class="list-item__thumb" src="${esc(fish.photos[0].src)}" alt="" width="80" height="80" loading="lazy" decoding="async">
         <span class="list-item__heading">
-          <span class="list-item__name">${esc(plant.name)}</span>
+          <span class="list-item__name">${esc(fish.name)}</span>
           <span class="list-item__qty">Qty ${line.qty}</span>
         </span>
-        <button type="button" class="list-item__action" data-move-favourite="${plant.id}" aria-label="Move ${esc(plant.name)} to favourites" title="Move to favourites">${ICONS.heart}</button>
-        <button type="button" class="list-item__action" data-remove="${plant.id}" aria-label="Remove ${esc(plant.name)}" title="Remove">${ICONS.bin}</button>
+        <button type="button" class="list-item__action" data-move-favourite="${fish.id}" aria-label="Move ${esc(fish.name)} to favourites" title="Move to favourites">${ICONS.heart}</button>
+        <button type="button" class="list-item__action" data-remove="${fish.id}" aria-label="Remove ${esc(fish.name)}" title="Remove">${ICONS.bin}</button>
         <span class="list-item__price">${priced ? money(sum) : "Unpriced"}</span>
       </summary>
       <div class="list-item__body">
         <div class="cart-line__top">
-          <p class="cart-line__sub">${esc(plant.scientific)}</p>
-          <p class="cart-line__each">${priced ? money(plant.price) : "Unpriced"}<small>each</small></p>
+          <p class="cart-line__sub">${esc(fish.scientific)}</p>
+          <p class="cart-line__each">${priced ? money(fish.price) : "Unpriced"}<small>each</small></p>
         </div>
         ${stores}
         <div class="cart-line__controls">
-          ${quantityHTML(key, plant.name, line.qty)}
-          <a href="index.html#plant-${plant.id}">Plant details</a>
+          ${quantityHTML(key, fish.name, line.qty)}
+          <a href="index.html#fish-${fish.id}">Fish details</a>
         </div>
       </div>
     </details>`;
   }
 
-  function favouriteHTML(plant) {
+  function favouriteHTML(fish) {
     return `<li class="favourite">
-      <img class="list-item__thumb" src="${esc(plant.photos[0].src)}" alt="" width="80" height="80" loading="lazy" decoding="async">
+      <img class="list-item__thumb" src="${esc(fish.photos[0].src)}" alt="" width="80" height="80" loading="lazy" decoding="async">
       <span class="list-item__heading">
-        <a class="list-item__name" href="index.html#plant-${plant.id}">${esc(plant.name)}</a>
-        <span class="list-item__qty">${plant.price === null ? "Unpriced" : `About ${money(plant.price)} each`}</span>
+        <a class="list-item__name" href="index.html#fish-${fish.id}">${esc(fish.name)}</a>
+        <span class="list-item__qty">${fish.price === null ? "Unpriced" : `About ${money(fish.price)} each`}</span>
       </span>
       <span class="favourite__actions">
-        <button type="button" class="list-item__action" data-unfavourite="${plant.id}" aria-label="Remove ${esc(plant.name)} from favourites" title="Remove from favourites">${ICONS.bin}</button>
-        <button type="button" class="button favourite__add" data-add-favourite="${plant.id}" aria-label="Add ${esc(plant.name)} to list">Add to list</button>
+        <button type="button" class="list-item__action" data-unfavourite="${fish.id}" aria-label="Remove ${esc(fish.name)} from favourites" title="Remove from favourites">${ICONS.bin}</button>
+        <button type="button" class="button favourite__add" data-add-favourite="${fish.id}" aria-label="Add ${esc(fish.name)} to list">Add to list</button>
       </span>
     </li>`;
   }
 
   function renderFavourites() {
-    const considered = consideredPlants();
+    const considered = consideredFish();
     $("#favourites").hidden = considered.length === 0;
     $("#favourites-items").innerHTML = considered.map(favouriteHTML).join("");
   }
@@ -103,8 +103,8 @@
 
     $("#list-groups").innerHTML = groups
       .map(
-        ({ zone, entries, subtotal }) => `<section class="list-group" aria-label="${esc(zone.name)}">
-          <h2>${esc(zone.name)}<span>${money(subtotal)}</span></h2>
+        ({ group, entries, subtotal }) => `<section class="list-group" aria-label="${esc(group.name)}">
+          <h2>${esc(group.name)}<span>${money(subtotal)}</span></h2>
           ${entries.map(itemHTML).join("")}
         </section>`,
       )
@@ -176,7 +176,7 @@
         removedId = +el.dataset.moveFavourite;
         moved = true;
         expanded.delete(removedId);
-        // Favouriting also takes the plant out of the list.
+        // Favouriting also takes the fish out of the list.
         setFavourite(removedId, true);
       },
     ],
@@ -187,7 +187,7 @@
         removedId = null;
         moved = false;
         if (id === null) return;
-        // Adding to the list also takes the plant back out of favourites.
+        // Adding to the list also takes the fish back out of favourites.
         addToCart(id);
       },
     ],
