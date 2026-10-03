@@ -6,7 +6,65 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A static, dependency-free single page that shortlists aquarium fish from Australian stores that ship to South Australia. Users browse fish by group, filter and sort them, open a detail dialog, and build a list (the code calls it the cart) that is managed on a separate page and can be copied as text. The list is for ordering through a local fish shop, so the price shown everywhere is the average of the online stores' prices, as a rough guide. Stock status isn't shown. There is no build step, package manager, linter or test suite in the repo.
 
-The catalogue is currently empty. Requirements for which fish to include and how to group them are still to come.
+The catalogue is currently empty. The next job is to fill it: see "Curating the catalogue" below.
+
+## Background: cloned from plant-selector
+
+This project was cloned from `/Users/daniel/dev/plant-selector`, a sibling project that does the same job for aquarium plants for the same tank, and the plant-specific parts have been stripped out. Read that project to see how a finished catalogue looks and reads:
+
+- `plants.js` holds about 360 plants in 8 zones (Foreground, Midground, Background, Attach to wood, Mosses, Emersed wood, Floating, Waterline). Each plant has a short plain-English `about`, `conditions` with a fixed vocabulary per label (so filters work), several credited `photos`, offers from many Australian online stores (Micro Aquatic Shop, Aquafy, Aquarzon, School of Scape, Nano Tanks Australia, ...) with a `unit` such as "Portion" or "Tissue culture cup", and `sources`.
+- `saNote` is used for things that matter to a South Australian buyer, such as a species being a declared pest in SA, a store not stating that it ships to SA, or how SA tap water affects a plant.
+- Its `CLAUDE.md` describes the same architecture as here, with zones in place of groups and an older cart storage format.
+
+Match the plant catalogue's voice, level of detail and data quality when adding fish. The fish data has no `defaultOffer`, and saved lists use the simpler shape described under "Saved data" below.
+
+## The tank
+
+The livestock is being chosen for this one tank, so keep its size and setup in mind when deciding what belongs in the catalogue.
+
+- **Aquarium**: Waterbox Clear 2420, rimless with an open top. 60 cm wide, 50 cm deep and 50 cm high. The substrate is about 9 cm high at the back and the water line sits about 2 cm below the top, so the water column at the back is about 39 cm.
+- **Water volume**: about 100 litres, including the filter and hoses and minus the hardscape.
+- **Water**: RO only, remineralised as needed. No parameters are set yet, so they can be chosen to suit the livestock (soft and acidic through to moderately hard). CO2 will lower the pH while it runs.
+- **Maintenance**: the aim is no water changes, relying on a large amount of plants. Prefer a light bioload and species that cope with stable, mature water rather than needing frequent changes.
+- **Light**: Maxspect Razor Nano R420R A8000 (60W, 8000K, freshwater). The photoperiod isn't decided, but will be a regular daily schedule.
+- **Filter**: Oase BioMaster Thermo 250 (2nd generation), with a built-in heater. The outlet is at the back left and points to the front. Flow is ordinary, with some calmer areas likely.
+- **CO2**: Dymax RX-123 regulator with a 0.75kg CO2 bottle. The schedule isn't decided, but will be regular.
+- **Substrate**: a base of lava rock, pumice and Master Soil Next, capped with river sand.
+
+Aquascape: river-inspired and heavily planted. The plant list is still being planned (in plant-selector).
+
+- Two large pieces of driftwood that look like one, splitting apart from the centre to leave space between them at the top. They break the surface by about 150mm.
+- Smooth river-style rocks around the base of the driftwood.
+- Lush green plants of a smaller scale to suit the size of the tank.
+- Background plants reach the surface.
+- Midground plants surround the driftwood and grow out from between the pieces.
+- Foreground plants grow from the crevices around the base of the driftwood and rocks, and are scattered around the sand.
+- Some plants and mosses are attached to the driftwood, with some moss above the waterline.
+- One or two plants are attached to the driftwood above the waterline, with their roots in the water.
+- A peace lily is mounted to the glass in the back left corner.
+
+## What the livestock should be
+
+- **An ecosystem**: the tank should work like a small ecosystem. Every animal should have a purpose, such as algae grazing, eating leftovers and detritus, turning over the sand, controlling pests, being a school that fills the open water, or being the animal people stop to watch.
+- **Variety**: a mix of animals to keep it interesting: fish, shrimp, snails and other invertebrates that suit a planted tank.
+- **Small scale**: small animals, so the tank looks bigger, in the same way the plants are kept small-leaved.
+- **Natural look**: they should look like they belong in a planted river scene. A pop of colour from one or two species is welcome, as long as it doesn't look out of place. Avoid gaudy or man-made looks (long-finned, GloFish, balloon and similar strains).
+- **Schooling fish**: wanted, but there probably isn't room for a large school, so small species that look good in modest groups suit best.
+- **Interest**: a couple of species should be fascinating to watch for their behaviour.
+- **Betta**: a subtle-looking female betta is being considered.
+- **Fits the tank**: peaceful with the other likely tankmates, safe with plants and shrimp where possible, and comfortable in the open top tank (jumpers are a real risk). With no water changes, a low bioload matters.
+
+## Curating the catalogue
+
+The page is the owner's central place to browse and consider livestock that a local fish shop in South Australia can order in. Don't pick the final stocking list. Curate a large, varied set of suitable options for the owner to choose from, then take to the shop.
+
+- Include anything that suits the brief above, across fish, shrimp, snails and other invertebrates, and leave out what doesn't: too large, aggressive, plant-eating or digging, needing a much bigger tank, or with a bioload too high for a tank with no water changes.
+- Use `about` to say what the animal is like and what role it can play in the tank (its purpose), and mention compatibility points such as eating shrimplets, jumping, or needing a group.
+- Use `saNote` for South Australia matters, such as species that are restricted or noxious in SA, or stores that won't ship live animals to SA.
+- Offers should come from Australian online stores that ship live animals to SA. The `unit` should say what the price is for (each, pair, pack of 10, ...). The average price is only a guide for ordering through the local shop.
+- How to group the catalogue isn't decided yet. Grouping by role (for example schooling fish, centrepiece fish, bottom dwellers, clean-up crew, shrimp, snails) would echo the plant zones. Check with the owner before settling on it.
+- `conditions` vocabulary isn't decided either. Useful labels are adult size, temperature, pH, hardness, temperament, swimming level, group size and shrimp safety. Settle each label's exact values before adding data in bulk, so filters added to `FACETS` match.
+- As in plant-selector, keep the tank out of the data and UI: don't mention the tank, its model or its dimensions in `about`, `saNote`, group intros or anywhere on the page. Write descriptions so they apply to any planted tank.
 
 ## Running
 
